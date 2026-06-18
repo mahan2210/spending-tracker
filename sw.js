@@ -1,6 +1,6 @@
 /* Service worker — network-first for the page so updates always load when online.
    Static assets (Chart.js, icons) are cache-first. Supabase calls always hit the network. */
-const CACHE = "mc-spend-v4";
+const CACHE = "mc-spend-v6";
 const ASSETS = [
   "./manifest.json",
   "./icon-192.png",
