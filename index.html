@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<title>Mahan Choudhury — Spending Tracker</title>
+<title>Premium Spending Tracker</title>
 <meta name="theme-color" content="#143a73">
 <script>try{if(localStorage.getItem('mc_theme')==='dark')document.documentElement.setAttribute('data-theme','dark');}catch(e){}</script>
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -278,7 +278,8 @@ const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
 /* ============================================================ */
 
 const CLOUD = !SUPABASE_URL.startsWith("PASTE") && !SUPABASE_ANON_KEY.startsWith("PASTE");
-const STORE_KEY = "mc_spendtrack_v1";
+const STORE_BASE = "mc_spendtrack_v1";
+function storeKey(){ return STORE_BASE + (CLOUD && USER ? ("::"+USER.id) : "::local"); }
 const MONTHS = ["January","February","March","April","May","June","July","August","September","October","November","December"];
 const CUR_SYM = {CAD:"$",USD:"$",EUR:"€",GBP:"£",BDT:"৳",INR:"₹"};
 const PALETTE = ["#1f57b0","#2b7fc4","#0f9d6c","#6d5bd0","#d6453f","#e0a32e","#3aa0a0","#5b7bb5","#8a6fc0","#cf7a3a","#7d8aa0","#159c8a"];
@@ -319,9 +320,12 @@ function e(date,desc,cat,purpose,amt,fixed){return {id:uid(),date,desc,category:
 function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2,7);}
 
 /* ---------- Persistence ---------- */
-function loadLocal(){ try{const r=localStorage.getItem(STORE_KEY); if(r)return JSON.parse(r);}catch(_){} const s=seed(); try{localStorage.setItem(STORE_KEY,JSON.stringify(s));}catch(_){} return s; }
+function blank(){ const s=seed(); Object.keys(s.profiles).forEach(k=>{ s.profiles[k].entries=[]; s.profiles[k].budgets={}; }); return s; }
+function readCache(){ try{ const r=localStorage.getItem(storeKey()); if(r){ const d=JSON.parse(r); if(d&&d.profiles)return d; } }catch(_){} return null; }
+function cacheLocal(){ try{ localStorage.setItem(storeKey(), JSON.stringify(DB)); }catch(_){} }
+function loadLocal(){ const c=readCache(); if(c)return c; const s=seed(); try{ localStorage.setItem(storeKey(), JSON.stringify(s)); }catch(_){} return s; }
 function save(){
-  try{ localStorage.setItem(STORE_KEY, JSON.stringify(DB)); }catch(_){}
+  cacheLocal();
   if(CLOUD && USER){ clearTimeout(saveTimer); setSync("⟳ Saving…","var(--gold2)"); saveTimer=setTimeout(pushCloud,700); }
 }
 async function pushCloud(){
@@ -334,10 +338,11 @@ async function pushCloud(){
   }catch(err){ setSync("⚠ Offline — saved here","var(--rose)"); }
 }
 async function loadCloud(){
-  let row=null;
-  try{ const {data}=await supa.from("user_data").select("data,updated_at").eq("user_id",USER.id).maybeSingle(); row=data; }catch(_){}
-  if(row && row.data && row.data.profiles){ DB=row.data; lastUpdated=row.updated_at; setSync("☁ Synced","var(--emerald)"); }
-  else { DB=loadLocal(); pushCloud(); }
+  let row=null, ok=false;
+  try{ const {data,error}=await supa.from("user_data").select("data,updated_at").eq("user_id",USER.id).maybeSingle(); if(!error){ ok=true; row=data; } }catch(_){}
+  if(ok && row && row.data && row.data.profiles){ DB=row.data; lastUpdated=row.updated_at; cacheLocal(); setSync("☁ Synced","var(--emerald)"); }
+  else if(ok){ DB=blank(); lastUpdated=null; cacheLocal(); pushCloud(); }                 // brand-new account → starts empty
+  else { DB=readCache()||blank(); setSync("⚠ Offline — local copy","var(--rose)"); }      // network error → only THIS user's cache
   startApp();
 }
 async function pullIfNewer(){
@@ -369,8 +374,9 @@ function handleAuth(session){
     document.getElementById("accountbar").style.display="flex";
     loadCloud();
   } else {
-    USER=null;
+    USER=null; DB=null; lastUpdated=null; clearTimeout(saveTimer);
     document.getElementById("appwrap").style.display="none";
+    document.getElementById("accountbar").style.display="none";
     document.getElementById("login").classList.add("show");
   }
 }
