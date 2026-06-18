@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<title>Premium Spending Tracker</title>
+<title>Mahan Choudhury — Spending Tracker</title>
 <meta name="theme-color" content="#143a73">
 <script>try{if(localStorage.getItem('mc_theme')==='dark')document.documentElement.setAttribute('data-theme','dark');}catch(e){}</script>
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -14,6 +14,7 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 <style>
   :root{
     --bg:#eef1f6; --panel:#ffffff; --panel2:#eef2f8;
@@ -199,11 +200,11 @@
     <div class="spacer"></div>
     <button class="btn" id="csvBtn">⬇ CSV</button>
     <button class="btn" id="themeBtn" title="Toggle dark / light">🌙</button>
-    <button class="btn" id="importBtn">📥 Import CSV / Excel / Bank</button>
+    <button class="btn" id="importBtn">📥 Import (CSV / Excel / PDF)</button>
     <button class="btn" id="backupBtn">💾 Backup</button>
     <button class="btn" id="restoreBtn">⬆ Restore</button>
     <input type="file" id="restoreFile" accept="application/json" style="display:none">
-    <input type="file" id="importFile" accept=".csv,.xlsx,.xls" style="display:none">
+    <input type="file" id="importFile" accept=".csv,.xlsx,.xls,.pdf" style="display:none">
   </div>
 
   <div class="stats" id="stats"></div>
@@ -649,8 +650,42 @@ function rowsToEntries(rows){
   }
   return out;
 }
+async function pdfToEntries(buf){
+  const lib=window.pdfjsLib; if(!lib){ toast("PDF engine not loaded — check your connection"); return []; }
+  try{ lib.GlobalWorkerOptions.workerSrc="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js"; }catch(_){}
+  const pdf=await lib.getDocument({data:buf}).promise;
+  const lines=[];
+  for(let p=1;p<=pdf.numPages;p++){
+    const page=await pdf.getPage(p); const tc=await page.getTextContent();
+    const buckets={};
+    tc.items.forEach(it=>{ if(!it.str||!it.str.trim())return; const y=Math.round(it.transform[5]/2)*2; (buckets[y]=buckets[y]||[]).push({x:it.transform[4],s:it.str}); });
+    Object.keys(buckets).map(Number).sort((a,b)=>b-a).forEach(y=>{
+      const line=buckets[y].sort((a,b)=>a.x-b.x).map(o=>o.s).join(" ").replace(/\s+/g," ").trim();
+      if(line)lines.push(line);
+    });
+  }
+  return pdfLinesToEntries(lines);
+}
+const PDF_DATE=/(\d{4}-\d{2}-\d{2}|\d{1,2}[\/\-.]\d{1,2}[\/\-.]\d{2,4}|\d{1,2}\s+[A-Za-z]{3,9}\.?\s+\d{2,4}|[A-Za-z]{3,9}\.?\s+\d{1,2},?\s+\d{2,4})/;
+const PDF_AMT=/-?\(?\$?\s?\d{1,3}(?:,\d{3})*\.\d{2}\)?/;
+function pdfLinesToEntries(lines){
+  const out=[];
+  for(const ln of lines){
+    const dm=ln.match(PDF_DATE); if(!dm)continue;
+    const date=normDate(dm[0]); if(!date)continue;
+    const rest=ln.slice(dm.index+dm[0].length);
+    const am=rest.match(PDF_AMT); if(!am)continue;                       // need a money value on the line
+    const credit=/\bcr\b|\bcredit\b|\bdeposit\b/i.test(ln) && !/\bdr\b|\bdebit\b/i.test(ln);
+    if(credit)continue;                                                  // skip deposits / income
+    let desc=rest.slice(0,am.index).replace(/\s+/g," ").trim()||"(no description)";
+    const amt=Math.abs(normAmt(am[0]));
+    if(!(amt>0))continue;
+    out.push({date,desc:desc.slice(0,80),category:"Uncategorized",purpose:"",amount:amt,fixed:false});
+  }
+  return out;
+}
 async function importFile(file){
-  const name=file.name.toLowerCase(); let entries=[];
+  const name=file.name.toLowerCase(); let entries=[], note="";
   try{
     if(name.endsWith(".csv")){ entries=rowsToEntries(parseCSV(await file.text())); }
     else if(name.endsWith(".xlsx")||name.endsWith(".xls")){
@@ -658,12 +693,24 @@ async function importFile(file){
       wb.SheetNames.forEach(sn=>{ if(/dashboard|summary/i.test(sn))return;
         const rows=XLSX.utils.sheet_to_json(wb.Sheets[sn],{header:1,raw:true,defval:""});
         entries=entries.concat(rowsToEntries(rows)); });
-    } else { toast("Please pick a .csv or .xlsx file"); return; }
+    }
+    else if(name.endsWith(".pdf")){ toast("Reading PDF…");
+      entries=await pdfToEntries(await file.arrayBuffer());
+      note="Parsed from a PDF statement — bank layouts vary, so please check the list below before importing. Deposits are skipped automatically; review amounts for accuracy."; }
+    else { toast("Pick a .csv, .xlsx or .pdf file"); return; }
   }catch(err){ toast("Could not read that file"); return; }
-  if(!entries.length){ toast("No expenses found in that file"); return; }
+  if(!entries.length){ toast("No transactions found. If it's a scanned/image PDF it has no text to read."); return; }
+  showImport(entries, note);
+}
+function showImport(entries, note){
   pendingImport=entries;
   const total=entries.reduce((a,b)=>a+b.amount,0);
-  document.getElementById("importBody").innerHTML=`Found <b>${entries.length}</b> expenses totalling <b>${money(total)}</b>.<br>Import into the <b>${escapeHtml(P().name)}</b> profile?`;
+  const rowsHtml=entries.slice(0,14).map(x=>`<tr><td style="padding:3px 8px 3px 2px;white-space:nowrap;color:var(--muted)">${x.date}</td><td style="padding:3px 8px;max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escapeHtml(x.desc)}</td><td style="padding:3px 2px;text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums">${money(x.amount)}</td></tr>`).join("");
+  document.getElementById("importBody").innerHTML=
+    `Found <b>${entries.length}</b> expenses · total <b>${money(total)}</b> → <b>${escapeHtml(P().name)}</b> profile.`
+    + (note?`<div style="font-size:11.5px;color:var(--faint);margin-top:6px;line-height:1.5">${note}</div>`:"")
+    + `<div style="max-height:190px;overflow:auto;margin-top:10px;border:1px solid var(--stroke);border-radius:8px;background:var(--weekbg)"><table style="font-size:12px;width:100%;border-collapse:collapse">${rowsHtml}</table></div>`
+    + (entries.length>14?`<div style="font-size:11px;color:var(--faint);margin-top:6px">…and ${entries.length-14} more</div>`:"");
   document.getElementById("importModal").classList.add("show");
 }
 function closeImport(){ document.getElementById("importModal").classList.remove("show"); pendingImport=null; }
