@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>Mahan Choudhury — Spending Tracker</title>
 <meta name="theme-color" content="#143a73">
+<script>try{if(localStorage.getItem('mc_theme')==='dark')document.documentElement.setAttribute('data-theme','dark');}catch(e){}</script>
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Spending">
@@ -19,7 +20,16 @@
     --stroke:#e3e8f0; --stroke2:#cbd5e1;
     --txt:#13243d; --muted:#5d6b82; --faint:#9aa6ba;
     --gold:#1f57b0; --gold2:#143a73; --emerald:#0f9d6c; --rose:#d6453f; --sky:#2b7fc4; --violet:#6d5bd0;
+    --weekbg:#fafbfd; --grid:rgba(19,36,61,.08); --track:rgba(19,36,61,.08); --tdline:rgba(19,36,61,.07);
     --shadow:0 1px 2px rgba(16,24,40,.06), 0 8px 24px rgba(16,24,40,.05); --radius:12px;
+  }
+  [data-theme="dark"]{
+    --bg:#0b1220; --panel:#131c2e; --panel2:#1b2538;
+    --stroke:#27324a; --stroke2:#3a4763;
+    --txt:#e9eef8; --muted:#9aa7c2; --faint:#6b7894;
+    --gold:#4f8cf0; --gold2:#9cc0fb; --emerald:#34d399; --rose:#fb7185; --sky:#5eb1ff; --violet:#a78bfa;
+    --weekbg:#0f1828; --grid:rgba(255,255,255,.07); --track:rgba(255,255,255,.09); --tdline:rgba(255,255,255,.06);
+    --shadow:0 1px 2px rgba(0,0,0,.4), 0 12px 30px rgba(0,0,0,.35);
   }
   *{box-sizing:border-box;margin:0;padding:0}
   body{
@@ -45,7 +55,7 @@
   .controls{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:22px}
   select,input{font-family:inherit;color:var(--txt);background:var(--panel);border:1px solid var(--stroke);border-radius:11px;padding:11px 13px;font-size:14px;outline:none;transition:.15s}
   select:focus,input:focus{border-color:var(--gold);box-shadow:0 0 0 3px rgba(31,87,176,.15)}
-  select option{background:#ffffff}
+  select option{background:var(--panel);color:var(--txt)}
   .seg{display:flex;background:var(--panel);border:1px solid var(--stroke);border-radius:11px;overflow:hidden}
   .seg button{background:transparent;border:none;color:var(--muted);padding:10px 14px;cursor:pointer;font-size:13px;font-weight:600}
   .seg button.active{background:var(--panel2);color:var(--txt)}
@@ -73,7 +83,7 @@
   .coach .msg .small{font-size:13px;color:var(--muted)}
   .budgetbox{display:flex;align-items:center;gap:8px}
   .budgetbox input{width:120px}
-  .progress{height:9px;background:rgba(19,36,61,.08);border-radius:99px;overflow:hidden;margin-top:10px;width:100%}
+  .progress{height:9px;background:var(--track);border-radius:99px;overflow:hidden;margin-top:10px;width:100%}
   .progress > div{height:100%;border-radius:99px;transition:width .5s}
   .grid2{display:grid;grid-template-columns:1.45fr 1fr;gap:18px;align-items:start}
   @media(max-width:980px){.grid2{grid-template-columns:1fr}.controls .spacer{display:none}}
@@ -90,7 +100,7 @@
   @media(max-width:760px){.addform{grid-template-columns:1fr 1fr}}
   .addform input,.addform select{width:100%;padding:10px 11px;font-size:13px}
   .addform .add{background:linear-gradient(135deg,#1f57b0,#17427f);color:#fff;border:none;border-radius:10px;font-weight:700;cursor:pointer;font-size:18px;padding:0 16px}
-  .week{margin-top:14px;border:1px solid var(--stroke);border-radius:10px;overflow:hidden;background:#fafbfd}
+  .week{margin-top:14px;border:1px solid var(--stroke);border-radius:10px;overflow:hidden;background:var(--weekbg)}
   .week-head{display:flex;align-items:center;justify-content:space-between;padding:12px 15px;cursor:pointer;user-select:none}
   .week-head:hover{background:var(--panel2)}
   .week-head .wl{display:flex;align-items:center;gap:11px}
@@ -101,7 +111,7 @@
   .week-body{padding:0 8px 8px}
   table{width:100%;border-collapse:collapse;font-size:13px}
   th{text-align:left;color:var(--faint);font-weight:600;font-size:11px;text-transform:uppercase;letter-spacing:.6px;padding:8px 10px;border-bottom:1px solid var(--stroke)}
-  td{padding:9px 10px;border-bottom:1px solid rgba(19,36,61,.07)}
+  td{padding:9px 10px;border-bottom:1px solid var(--tdline)}
   tr:last-child td{border-bottom:none}
   .amt{text-align:right;font-weight:650;font-variant-numeric:tabular-nums}
   .pill{display:inline-block;padding:3px 9px;border-radius:99px;font-size:11px;font-weight:600;background:var(--panel2);border:1px solid var(--stroke)}
@@ -118,6 +128,9 @@
   .filters{display:flex;gap:9px;flex-wrap:wrap;margin-top:14px}
   .filters input,.filters select{flex:1;min-width:120px}
   footer{margin-top:26px;text-align:center;color:var(--faint);font-size:12px;line-height:1.7}
+  .credit{margin-top:8px;margin-bottom:6px;text-align:center;color:var(--faint);font-size:11.5px;letter-spacing:.3px}
+  .credit b{color:var(--muted)}
+  .accountbar .welcome b{color:var(--txt)}
   .toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(20px);background:#13243d;color:#fff;border:1px solid rgba(255,255,255,.12);padding:13px 20px;border-radius:10px;font-size:13.5px;opacity:0;transition:.3s;z-index:80;box-shadow:0 12px 30px rgba(16,24,40,.25)}
   .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
   .modal{position:fixed;inset:0;background:rgba(19,36,61,.45);backdrop-filter:blur(3px);display:none;align-items:center;justify-content:center;z-index:90;padding:20px}
@@ -148,7 +161,7 @@
 <!-- LOGIN -->
 <div class="login" id="login">
   <div class="loginbox">
-    <div class="logo">M</div>
+    <div class="logo">$</div>
     <h2>Spending Tracker</h2>
     <p>Sign in to sync your data securely across your laptop and phone.</p>
     <input type="email" id="loginEmail" placeholder="you@email.com" autocomplete="email">
@@ -166,8 +179,8 @@
   <div class="accountbar" id="accountbar"></div>
   <header class="app">
     <div class="brand">
-      <div class="logo">M</div>
-      <div><h1>Mahan Choudhury</h1><p>Expense Management</p></div>
+      <div class="logo" id="brandLogo">$</div>
+      <div><h1 id="brandName">My Expenses</h1><p>Expense Management</p></div>
     </div>
     <div class="profiles" id="profiles"></div>
   </header>
@@ -185,7 +198,8 @@
     </div>
     <div class="spacer"></div>
     <button class="btn" id="csvBtn">⬇ CSV</button>
-    <button class="btn" id="importBtn">📥 Import CSV / Excel</button>
+    <button class="btn" id="themeBtn" title="Toggle dark / light">🌙</button>
+    <button class="btn" id="importBtn">📥 Import CSV / Excel / Bank</button>
     <button class="btn" id="backupBtn">💾 Backup</button>
     <button class="btn" id="restoreBtn">⬆ Restore</button>
     <input type="file" id="restoreFile" accept="application/json" style="display:none">
@@ -237,6 +251,7 @@
     </div>
   </div>
   <footer id="footerNote"></footer>
+  <div class="credit">This system is developed by <b>Mahan Choudhury</b></div>
 </div>
 <div class="modal" id="importModal">
   <div class="modalbox">
@@ -258,7 +273,7 @@
    CONFIG — paste your two Supabase values between the quotes.
    Until you do, the app runs fully offline on this device.
    ============================================================ */
-const SUPABASE_URL      = "https://zwcvjpjzkyzttuajbnvg.supabase.co";
+const SUPABASE_URL      = "https://zwcvjpjzkyzttuajbnvg.supabase.co/rest/v1/";
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp3Y3ZqcGp6a3l6dHR1YWpibnZnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE3MzU0MjksImV4cCI6MjA5NzMxMTQyOX0.s6jXlVuBQbNg1mri1-Xu8L5cA7y_91_Rq3D4dGcH3Ks";
 /* ============================================================ */
 
@@ -373,11 +388,26 @@ function wireLogin(){
     if(error)document.getElementById("loginNote").textContent="⚠ "+error.message;
   };
 }
+function userName(){
+  if(CLOUD && USER){
+    const md=USER.user_metadata||{};
+    let n=md.full_name||md.name||md.user_name;
+    if(!n && USER.email){ n=USER.email.split("@")[0].replace(/[._\-]+/g," ").replace(/\b\w/g,c=>c.toUpperCase()); }
+    return (n||"My Expenses").trim();
+  }
+  return "My Expenses";
+}
+function firstName(){ return userName().split(" ")[0]; }
+function renderBrand(){
+  const name=userName();
+  const h=document.getElementById("brandName"); if(h)h.textContent=name;
+  const lg=document.getElementById("brandLogo"); if(lg)lg.textContent=((name[0]||"$").toUpperCase());
+}
 function renderAccount(){
-  const el=document.getElementById("accountbar");
-  if(!CLOUD){ el.innerHTML=`<span class="sync">🔒 Local only — data stays on this device</span>`; el.style.display="flex"; return; }
-  el.innerHTML=`<span class="sync" id="syncPill">☁ Synced</span>
-    <span class="who">${USER?escapeHtml(USER.email||"Signed in"):""}</span>
+  const el=document.getElementById("accountbar"); renderBrand();
+  if(!CLOUD){ el.innerHTML=`<span class="sync">🔒 Local mode — data stays on this device</span>`; el.style.display="flex"; return; }
+  el.innerHTML=`<span class="welcome">Welcome, <b>${escapeHtml(firstName())}</b></span>
+    <span class="sync" id="syncPill">☁ Synced</span>
     <button id="signout">Sign out</button>`;
   document.getElementById("signout").onclick=async()=>{ await supa.auth.signOut(); toast("Signed out"); };
 }
@@ -393,6 +423,15 @@ function monthEntries(){ const pre=view.year+"-"+pad(view.month); return P().ent
 function weekOf(day){ return Math.min(5,Math.floor((day-1)/7)+1); }
 function weekRange(w){ const dim=daysInMonth(view.year,view.month); const s=(w-1)*7+1, en=Math.min(w*7,dim); if(s>dim)return null; return [s,en]; }
 function escapeHtml(s){ return String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c])); }
+function cssVar(n){ return getComputedStyle(document.documentElement).getPropertyValue(n).trim(); }
+function applyTheme(dark){
+  document.documentElement.setAttribute("data-theme", dark?"dark":"light");
+  try{ localStorage.setItem("mc_theme", dark?"dark":"light"); }catch(_){}
+  const b=document.getElementById("themeBtn"); if(b)b.textContent=dark?"☀️":"🌙";
+  const meta=document.querySelector('meta[name="theme-color"]'); if(meta)meta.setAttribute("content",dark?"#0b1220":"#143a73");
+  if(DB && document.getElementById("catChart")) renderCharts();
+}
+function toggleTheme(){ applyTheme(document.documentElement.getAttribute("data-theme")!=="dark"); }
 
 /* ---------- Render ---------- */
 function renderProfiles(){
@@ -499,8 +538,8 @@ function renderCharts(){
   document.getElementById("yearTag").textContent=view.year; drawLine("yearChart",yl,yv);
 }
 function baseOpts(extra){return Object.assign({responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>" "+money(c.parsed.y!=null?c.parsed.y:c.parsed)}}}},extra||{});}
-function gridScale(){return {x:{ticks:{color:"#5d6b82"},grid:{display:false}},y:{ticks:{color:"#5d6b82",callback:v=>sym()+v},grid:{color:"rgba(19,36,61,.08)"}}};}
-function drawDoughnut(id,labels,vals){ if(charts[id])charts[id].destroy(); const ctx=document.getElementById(id); if(!vals.length){ctx.getContext("2d").clearRect(0,0,ctx.width,ctx.height);return;} charts[id]=new Chart(ctx,{type:"doughnut",data:{labels,datasets:[{data:vals,backgroundColor:labels.map((_,i)=>PALETTE[i%PALETTE.length]),borderColor:"#ffffff",borderWidth:2}]},options:{responsive:true,maintainAspectRatio:false,cutout:"62%",plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>" "+c.label+": "+money(c.parsed)}}}}}); }
+function gridScale(){const t=cssVar('--muted')||"#5d6b82",g=cssVar('--grid')||"rgba(19,36,61,.08)";return {x:{ticks:{color:t},grid:{display:false}},y:{ticks:{color:t,callback:v=>sym()+v},grid:{color:g}}};}
+function drawDoughnut(id,labels,vals){ if(charts[id])charts[id].destroy(); const ctx=document.getElementById(id); if(!vals.length){ctx.getContext("2d").clearRect(0,0,ctx.width,ctx.height);return;} charts[id]=new Chart(ctx,{type:"doughnut",data:{labels,datasets:[{data:vals,backgroundColor:labels.map((_,i)=>PALETTE[i%PALETTE.length]),borderColor:cssVar('--panel'),borderWidth:2}]},options:{responsive:true,maintainAspectRatio:false,cutout:"62%",plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>" "+c.label+": "+money(c.parsed)}}}}}); }
 function drawBar(id,labels,vals){ if(charts[id])charts[id].destroy(); charts[id]=new Chart(document.getElementById(id),{type:"bar",data:{labels,datasets:[{data:vals,backgroundColor:"rgba(31,87,176,.85)",borderRadius:6,maxBarThickness:48}]},options:baseOpts({scales:gridScale()})}); }
 function drawLine(id,labels,vals){ if(charts[id])charts[id].destroy(); const ctx=document.getElementById(id).getContext("2d"); const g=ctx.createLinearGradient(0,0,0,260); g.addColorStop(0,"rgba(31,87,176,.22)"); g.addColorStop(1,"rgba(31,87,176,0)"); charts[id]=new Chart(ctx,{type:"line",data:{labels,datasets:[{data:vals,borderColor:"#1f57b0",backgroundColor:g,fill:true,tension:.35,pointBackgroundColor:"#1f57b0",pointRadius:3}]},options:baseOpts({scales:gridScale()})}); }
 
@@ -546,37 +585,58 @@ function normDate(v){
   if(typeof v==="number" && v>20000 && v<90000){ const d=new Date(Math.round((v-25569)*86400*1000)); return d.getUTCFullYear()+"-"+pad(d.getUTCMonth()+1)+"-"+pad(d.getUTCDate()); }
   const s=String(v==null?"":v).trim(); if(!s)return null;
   let m=s.match(/^(\d{4})[-\/.](\d{1,2})[-\/.](\d{1,2})/); if(m)return m[1]+"-"+pad(+m[2])+"-"+pad(+m[3]);
-  m=s.match(/^(\d{1,2})[-\/.](\d{1,2})[-\/.](\d{4})/); if(m)return m[3]+"-"+pad(+m[1])+"-"+pad(+m[2]);
+  m=s.match(/^(\d{1,2})[-\/.](\d{1,2})[-\/.](\d{4})/);
+  if(m){ let a=+m[1],b=+m[2],day,mon; if(a>12){day=a;mon=b;} else if(b>12){mon=a;day=b;} else {mon=a;day=b;} return m[3]+"-"+pad(mon)+"-"+pad(day); }
   const d=new Date(s); if(!isNaN(d))return d.getFullYear()+"-"+pad(d.getMonth()+1)+"-"+pad(d.getDate());
   return null;
 }
 function normAmt(v){ if(typeof v==="number")return v; const n=parseFloat(String(v==null?"":v).replace(/[^0-9.\-]/g,"")); return isNaN(n)?0:n; }
 function rowsToEntries(rows){
+  // Header aliases — handles our own files AND typical bank e-statement exports.
+  const isDate=c=>c==="date"||/date|posted|trans/.test(c);
+  const isDebit=c=>/debit|withdraw|money out|paid out|\(dr\)|outflow/.test(c);
+  const isCredit=c=>/credit|deposit|money in|paid in|\(cr\)|inflow/.test(c);
+  const isAmount=c=>/amount|value/.test(c);
+  const isDesc=c=>/desc|narration|particular|details|transaction|remark|memo|payee|reference|merchant|name/.test(c);
   let hi=-1, map={};
-  for(let r=0;r<Math.min(rows.length,40);r++){
+  for(let r=0;r<Math.min(rows.length,60);r++){
     const cells=(rows[r]||[]).map(c=>String(c==null?"":c).trim().toLowerCase());
-    if(cells.some(c=>c==="date") && cells.some(c=>c.includes("amount"))){
+    if(cells.some(isDate) && cells.some(c=>isAmount(c)||isDebit(c)||isCredit(c))){
       hi=r;
       cells.forEach((c,idx)=>{
-        if(c==="date"&&map.date==null)map.date=idx;
-        else if((c==="description"||c==="desc"||c==="item"||c==="details")&&map.desc==null)map.desc=idx;
+        if(isDate(c)&&map.date==null)map.date=idx;
         else if((c==="category"||c==="cat")&&map.cat==null)map.cat=idx;
-        else if(c.indexOf("purpose")>-1&&map.purpose==null)map.purpose=idx;
-        else if(c.indexOf("amount")>-1&&map.amount==null)map.amount=idx;
-        else if(c.indexOf("fixed")>-1&&map.fixed==null)map.fixed=idx;
+        else if(/purpose|project/.test(c)&&map.purpose==null)map.purpose=idx;
+        else if(/fixed/.test(c)&&map.fixed==null)map.fixed=idx;
+        else if(isDebit(c)&&map.debit==null)map.debit=idx;
+        else if(isCredit(c)&&map.credit==null)map.credit=idx;
+        else if(isAmount(c)&&map.amount==null)map.amount=idx;
+        else if(isDesc(c)&&map.desc==null)map.desc=idx;
       });
       break;
     }
   }
-  if(hi<0||map.date==null||map.amount==null) return [];
+  if(hi<0||map.date==null||(map.amount==null&&map.debit==null)) return [];
+  // Single signed amount column? (bank: negatives = money out). Detect once.
+  let signed=false;
+  if(map.debit==null && map.amount!=null){
+    for(let r=hi+1;r<rows.length;r++){ const v=rows[r]&&rows[r][map.amount];
+      if(v!=null && (typeof v==="number"? v<0 : /(^\s*-)|\(.*\d.*\)/.test(String(v)))){ signed=true; break; } }
+  }
   const out=[];
   for(let r=hi+1;r<rows.length;r++){
     const cells=rows[r]; if(!cells)continue;
-    const date=normDate(cells[map.date]); const amt=normAmt(cells[map.amount]);
-    if(!date||!(amt>0))continue;
+    const date=normDate(cells[map.date]); if(!date)continue;
+    let amt;
+    if(map.debit!=null){ amt=Math.abs(normAmt(cells[map.debit])); }          // bank: money out = expense
+    else { const cell=cells[map.amount];
+      const neg=(typeof cell==="number"? cell<0 : /(^\s*-)|\(.*\d.*\)/.test(String(cell||"")));
+      if(signed && !neg) continue;                                            // skip deposits/income
+      amt=Math.abs(normAmt(cell)); }
+    if(!(amt>0))continue;
     const desc=map.desc!=null?String(cells[map.desc]==null?"":cells[map.desc]).trim():"";
     out.push({date,desc:desc||"(no description)",
-      category:(map.cat!=null?String(cells[map.cat]==null?"":cells[map.cat]).trim():"")||"Other",
+      category:(map.cat!=null?String(cells[map.cat]==null?"":cells[map.cat]).trim():"")||"Uncategorized",
       purpose:map.purpose!=null?String(cells[map.purpose]==null?"":cells[map.purpose]).trim():"",
       amount:amt,
       fixed:map.fixed!=null?/^(fixed|yes|true|1)$/i.test(String(cells[map.fixed]==null?"":cells[map.fixed]).trim()):false});
@@ -631,6 +691,7 @@ function startApp(){
   syncCurrencySeg();
   if(!wired){ wireApp(); wired=true; }
   renderAll();
+  applyTheme(document.documentElement.getAttribute("data-theme")==="dark");
 }
 function wireApp(){
   document.getElementById("yearSel").onchange=ev=>{view.year=+ev.target.value;renderAll();};
@@ -649,6 +710,7 @@ function wireApp(){
   document.getElementById("impCancel").onclick=closeImport;
   document.getElementById("impReplace").onclick=()=>applyImport("replace");
   document.getElementById("impAdd").onclick=()=>applyImport("add");
+  document.getElementById("themeBtn").onclick=toggleTheme;
   window.addEventListener("focus",pullIfNewer);
   document.addEventListener("visibilitychange",()=>{ if(!document.hidden)pullIfNewer(); });
 }
